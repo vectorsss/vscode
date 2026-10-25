@@ -351,16 +351,24 @@ jobs:
 
   # The test jobs below report "<OS> (<part>) / <job>" checks and skip when the
   # changes cannot affect them.
+  # On Linux, which runs every unit test, the Electron and node.js unit tests in one job could be the
+  # slowest job of the workflow, so they run on separate machines. macOS and Windows run only the
+  # selected unit tests, so they rarely take as long.
   linux-electron-unit-tests:
-    name: Linux (run)
+    name: Linux (${{ matrix.suite }})
     needs: changes
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.unit-tests == 'true') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [electron, node]
     uses: ./.github/workflows/pr-linux-test.yml
     with:
       job_name: Electron-Unit
       electron_tests: true
       integration_tests: false
       smoke_tests: false
+      unit_test_suite: ${{ matrix.suite }}
 
   linux-electron-tests:
     name: Linux (run)
